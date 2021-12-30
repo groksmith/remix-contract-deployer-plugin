@@ -14,6 +14,16 @@
   padding: 0.5em
 }
 
+.disabled {
+  opacity: 0.65;
+  pointer-events: none;
+  cursor: default;
+}
+
+.info {
+  font-size: 11px;
+}
+
 input {
   background-color: #35384c;
   color: white;

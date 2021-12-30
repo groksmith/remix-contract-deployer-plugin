@@ -80,9 +80,20 @@ const encodeBytes = (params: string | string[]) => {
   return makeHex(params)
 }
 
+const getFilePath = async (client: PluginClient) => {
+  let filePath = null;
+  try {
+    filePath = await client.call('fileManager', 'getCurrentFile');
+  } catch (error) {
+    filePath = null
+  }
+  return filePath
+}
+
 function App() {
   const client = useRef(createClient(new PluginClient()))
   const provider = useRef<any>(null);
+  const [canParse, setCanParse] = useState(false);
   const [constructorInput, setConstructorInput] = useState<ABIDescription | null>(null)
   const [contractToDeploy, setContract] = useState<unknown>(null)
   const [customInput, setCustomInput] = useState<VariableType>({})
@@ -110,6 +121,14 @@ function App() {
     setContract(contract)
   }
 
+  const onNetworkChange = (networkDecimalId: string) => {
+    const parsed = parseInt(networkDecimalId);
+    const networkToChange = networks.find(n => n.chainDecimal === parsed);
+    if(networkToChange) {
+      setSelectedNetwork(parsed)
+    }
+  }
+
   useEffect(() => {
     const initWeb3 = async () => {
       provider.current = await detectEthereumProvider();
@@ -131,20 +150,34 @@ function App() {
         if(selectedNetwork) {
           setSelectedNetwork(currentSelected)
         }
-      
-        provider.current.on('networkChanged', (networkDecimalId: string) => {
-          const parsed = parseInt(networkDecimalId);
-          const networkToChange = networks.find(n => n.chainDecimal === parsed);
-          if(networkToChange) {
-            setSelectedNetwork(parsed)
-          }
-        });
+        client.current.on('fileManager', 'currentFileChanged', async () => {
+          const filePath = await getFilePath(client.current)
+          setCanParse(!!filePath)
+        })
+
+        client.current.on('fileManager', 'noFileSelected', async () => {
+          setCanParse(false)
+        })
+
+        const filePath = await getFilePath(client.current)
+        setCanParse(!!filePath)
+
+        provider.current.on('networkChanged', onNetworkChange);
       }
     }
 
     client.current.onload(async () => {
       await initWeb3()
     })
+
+    return () => {
+      client.current.off('fileManager', 'currentFileChanged')
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      client.current.off('fileManager', 'noFileSelected')
+      if(provider.current) {
+        provider.current.removeListener('networkChanged', onNetworkChange)
+      }
+    }
   }, [])    
 
   const handleCustomInput = (abi: ABIParameter) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,7 +287,9 @@ function App() {
   return (
     <div className="container">
       Select compiled contract JSON
-      <div role="button" className="button" onClick={handleParsing}>load contract</div>
+      <div role="button" className={`button ${canParse ? '' : 'disabled'}`} onClick={handleParsing}>
+        load contract {!canParse ? <span className='info'>(No compiled json selected)</span> : ''}
+      </div>
       {constructorInput ? (
         <>
           {constructorInput.inputs && constructorInput.inputs.map((input, idx) => {
