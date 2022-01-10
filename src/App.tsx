@@ -131,7 +131,24 @@ function App() {
 
   useEffect(() => {
     const initWeb3 = async () => {
+      // Events for inital load
+
+      client.current.on('fileManager', 'currentFileChanged', async () => {
+        const filePath = await getFilePath(client.current)
+        setCanParse(!!filePath)
+      })
+
+      client.current.on('fileManager', 'noFileSelected', async () => {
+        setCanParse(false)
+      })
+
+      const filePath = await getFilePath(client.current)
+      setCanParse(!!filePath)
+      
+
+      // Init provider with metamask
       provider.current = await detectEthereumProvider();
+      
       if (provider.current) {
         await provider.current.request({ method: 'eth_requestAccounts' });
         provider.current.on('accountsChanged', (accounts: string[]) => {
@@ -150,17 +167,6 @@ function App() {
         if(selectedNetwork) {
           setSelectedNetwork(currentSelected)
         }
-        client.current.on('fileManager', 'currentFileChanged', async () => {
-          const filePath = await getFilePath(client.current)
-          setCanParse(!!filePath)
-        })
-
-        client.current.on('fileManager', 'noFileSelected', async () => {
-          setCanParse(false)
-        })
-
-        const filePath = await getFilePath(client.current)
-        setCanParse(!!filePath)
 
         provider.current.on('networkChanged', onNetworkChange);
       }
