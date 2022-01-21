@@ -7,7 +7,6 @@ import { json } from 'starknet'
 import factoryContract from './factory.json'
 import detectEthereumProvider from '@metamask/detect-provider';
 
-
 import { useEffect, useRef, useState } from 'react'
 
 import './App.css'
@@ -90,6 +89,8 @@ const getFilePath = async (client: PluginClient) => {
   return filePath
 }
 
+const genRanHex = (size = 16) => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+
 function App() {
   const client = useRef(createClient(new PluginClient()))
   const provider = useRef<any>(null);
@@ -147,7 +148,7 @@ function App() {
       
 
       // Init provider with metamask
-      provider.current = await detectEthereumProvider();
+      provider.current = window.ethereum
       
       if (provider.current) {
         await provider.current.request({ method: 'eth_requestAccounts' });
@@ -259,6 +260,11 @@ function App() {
       })
   }
 
+  const generateRandomSalt = () => {
+    const randomSalt = genRanHex(14);
+    setSalt(`0x${randomSalt}`);
+  }
+
   const canDeploy = () => {
     // If all contstructor inputs are valid and entered
     // if constructor has two initial arguments, and only one given
@@ -313,7 +319,10 @@ function App() {
       {contractToDeploy ? (
         <>
           <label htmlFor="salt">Enter Salt</label>
-          <input id="salt" placeholder="ex. 0x018716238712" value={salt} onChange={e => setSalt(e.target.value)} /> 
+          <div className='salt-container'>
+            <input id="salt" placeholder="ex. 0x018716238712" value={salt} onChange={e => setSalt(e.target.value)} /> 
+            <button className='generate-salt' onClick={generateRandomSalt}>generate</button>
+          </div>
         </>
       ): null}
 
