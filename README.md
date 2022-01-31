@@ -20,8 +20,9 @@ After you start the development server, go to http://remix.ethereum.org/, naviga
 
 Now you will see the new plugin in the left bar.
 
+## Documentation
 
-#### Welcome to the remix-contract-deployer-plugin wiki!
+Welcome to the remix-contract-deployer-plugin!
 
 This plugin will help you to work with compiled solidity contracts. This plugin is under a development so most features are under construction.
 
