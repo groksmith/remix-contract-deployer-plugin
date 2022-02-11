@@ -267,7 +267,7 @@ function App() {
               deployedDate: new Date()
             };
 
-            setDeployedAddress((old) => old ? [...old, newAddress] : [newAddress])
+            setDeployedAddress((old) => old ? [newAddress, ...old] : [newAddress])
           })
       })
       .catch((err: any) => {
