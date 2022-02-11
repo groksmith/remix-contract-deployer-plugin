@@ -31,6 +31,38 @@
   width: 100%;
 }
 
+.copy {
+  color: #fff;
+  background-color: #007aa6;
+  border-color: #007aa6;
+  width: max-content;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  margin-left: 8px;
+  outline: none;
+  font-size: 11px;
+}
+
+.date {
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.copy-addr {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.contract-info {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
 .generate-salt:focus {
   outline: none;
 }
@@ -71,6 +103,11 @@ input::placeholder {
 
 .address {
   overflow-x: scroll;
+  font-size: 12px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  scrollbar-width: thin;
+  width: 100%;
 }
 
 label {

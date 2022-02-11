@@ -100,14 +100,16 @@ function App() {
   const [customInput, setCustomInput] = useState<VariableType>({})
   const [accounts, setAccounts] = useState<string[]>([])
   const [salt, setSalt] = useState<string>('')
-  const [depoyedAddress, setDeployedAddress] = useState<string | null>(null)
+  const [depoyedAddress, setDeployedAddress] = useState<Array<{
+    address: string;
+    deployedDate: Date;
+  }> | null>(null);
   const [isLoading, setLoading] = useState(false)
   const [error, setError] = useState('');
   const [selectedNetwork, setSelectedNetwork] = useState<number>(0);
 
   const handleParsing = async () => {
     setError('')
-    setDeployedAddress(null)
     const filePath = await client.current.call('fileManager', 'getCurrentFile');
     const contractJson = await client.current.call('fileManager', 'readFile', filePath);
     const contract = json.parse(contractJson) as CompiledContract;
@@ -206,7 +208,7 @@ function App() {
     setSelectedNetwork(parseInt(provider.current.networkVersion))
   }
 
-  const handleVariableParsing = () => {
+  const handleVariableParsing = async () => {
     const encodedValues = Object.keys(customInput).map(key => {
       const param = customInput[key]
       const isArray = param.type.indexOf('[]') !== -1
@@ -241,14 +243,31 @@ function App() {
     // Loading the factory contract
     const contract = new window.web3.eth.Contract(factoryContract.abi as AbiItem[], '0x56434E34E7771aa9680d09220Fe5d4D5c305323a');
     setLoading(true)
+    await client.current.call('terminal', 'log', {
+      value: 'Deploying contract',
+      type: 'log'
+    });
     contract.methods.deploy(`0x${toDeploy}`, salt)
       .send({ from: accounts[0] })
-      .then(() => {
+      .then(async () => {
+        await client.current.call('terminal', 'log', {
+          value: 'Contract deployed, retrieving address',
+          type: 'log'
+        });
         contract.methods.getAddress(`0x${toDeploy}`, salt)
           .call()
-          .then((res: string) => {
+          .then(async (res: string) => {
             resetState()
-            setDeployedAddress(res)
+            await client.current.call('terminal', 'log', {
+              value: `Address received, deployed contract address: ${res}`,
+              type: 'log'
+            });
+            const newAddress = {
+              address: res,
+              deployedDate: new Date()
+            };
+
+            setDeployedAddress((old) => old ? [...old, newAddress] : [newAddress])
           })
       })
       .catch((err: any) => {
@@ -336,7 +355,19 @@ function App() {
         </div>
       ) : null}
       {isLoading ? 'Deploy in progress...' : null}
-      {depoyedAddress ? <>Deployed address: <div className="address">{depoyedAddress}</div></> : null}
+      {depoyedAddress ? (
+        <div>
+          <p>Deployed contract addresses:</p>
+          {depoyedAddress.map((addr, idx) => (
+            <div key={idx} className="copy-addr">
+              <div className="date">Deployed on: {addr.deployedDate.toLocaleDateString()} {addr.deployedDate.toLocaleTimeString()}</div>
+              <div className="contract-info">
+                <div className="address">{addr.address}</div>
+              </div>
+            </div>
+            ))}
+        </div>
+      ) : null}
       {error ? <div className="error">{error}</div> : null}
     </div>  
   )
