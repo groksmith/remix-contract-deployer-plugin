@@ -106,6 +106,7 @@ function App() {
   const [accounts, setAccounts] = useState<string[]>([])
   const [salt, setSalt] = useState<string>('')
   const [filePath, setFilePath] = useState<string>('')
+  const [isProviderValid, setProviderValid] = useState(false);
   const [depoyedAddress, setDeployedAddress] = useState<Array<{
     address: string;
     deployedDate: Date;
@@ -163,6 +164,7 @@ function App() {
       provider.current = window.ethereum
       
       if (provider.current) {
+        setProviderValid(true);
         await provider.current.request({ method: 'eth_requestAccounts' });
         provider.current.on('accountsChanged', (accounts: string[]) => {
           if(accounts.length > 0) {
@@ -331,6 +333,15 @@ function App() {
       }
       resetState()
     }
+  }
+
+  if(!isProviderValid) {
+    return (
+      <div className="container">
+        Note: This plugin uses Metamask, it seemse to don't have it.
+        Please add Metamask extension to your browsers to use this plugin.
+      </div>
+    )
   }
 
   return (
