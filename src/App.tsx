@@ -89,6 +89,11 @@ const getFilePath = async (client: PluginClient) => {
   return filePath
 }
 
+const parseFilePath = (filePath: string) => {
+  const parsed = filePath.split('/');
+  return parsed[parsed.length - 1];
+}
+
 const genRanHex = (size = 16) => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
 
 function App() {
@@ -100,9 +105,12 @@ function App() {
   const [customInput, setCustomInput] = useState<VariableType>({})
   const [accounts, setAccounts] = useState<string[]>([])
   const [salt, setSalt] = useState<string>('')
+  const [filePath, setFilePath] = useState<string>('')
   const [depoyedAddress, setDeployedAddress] = useState<Array<{
     address: string;
     deployedDate: Date;
+    salt: string;
+    network: string;
   }> | null>(null);
   const [isLoading, setLoading] = useState(false)
   const [error, setError] = useState('');
@@ -110,6 +118,7 @@ function App() {
 
   const handleParsing = async () => {
     setError('')
+    resetState();
     const filePath = await client.current.call('fileManager', 'getCurrentFile');
     const contractJson = await client.current.call('fileManager', 'readFile', filePath);
     const contract = json.parse(contractJson) as CompiledContract;
@@ -120,7 +129,8 @@ function App() {
         setConstructorInput(constructor)
       }
     } 
-
+    
+    setFilePath(filePath);
     setContract(contract)
   }
 
@@ -204,11 +214,12 @@ function App() {
     setContract(null)
     setCustomInput({})
     setSalt('')
+    setFilePath('')
     setLoading(false)
     setSelectedNetwork(parseInt(provider.current.networkVersion))
   }
 
-  const handleVariableParsing = async () => {
+  const processCustomInputs = () => {
     const encodedValues = Object.keys(customInput).map(key => {
       const param = customInput[key]
       const isArray = param.type.indexOf('[]') !== -1
@@ -226,6 +237,7 @@ function App() {
         params
       }
     })
+    
     /**
      * This part is responsible for encoding the constructor parameters
      * because if the constructor has parameters those need to be given initially
@@ -233,8 +245,12 @@ function App() {
      */
     const types = encodedValues.map(({ type }) => type)
     const values = encodedValues.map(({ params }) => params)
-  
-    const encodedParams = window.web3.eth.abi.encodeParameters(types, values).substring(2)
+    return window.web3.eth.abi.encodeParameters(types, values).substring(2)
+  }
+
+  const handleVariableParsing = async () => {
+    const hasCustomInputs = Object.keys(customInput).length > 0;
+    const encodedParams = hasCustomInputs ? processCustomInputs() : '';
 
     const ctr = contractToDeploy as CompiledContractJSON
     // Conacting the compiled contract with encoded consturcor parameters
@@ -259,12 +275,14 @@ function App() {
           .then(async (res: string) => {
             resetState()
             await client.current.call('terminal', 'log', {
-              value: `Address received, deployed contract address: ${res}`,
+              value: `Address received, deployed contract address: ${res}, salt: ${salt}`,
               type: 'log'
             });
             const newAddress = {
+              salt,
               address: res,
-              deployedDate: new Date()
+              network: networks.find(n => n.chainDecimal === selectedNetwork)?.name || '',
+              deployedDate: new Date(),
             };
 
             setDeployedAddress((old) => old ? [newAddress, ...old] : [newAddress])
@@ -318,6 +336,9 @@ function App() {
   return (
     <div className="container">
       Select compiled contract JSON
+      {filePath ? (
+        <span className="parsed-file-path">Operating on: {parseFilePath(filePath)}</span>
+      ): null}
       <div role="button" className={`button ${canParse ? '' : 'disabled'}`} onClick={handleParsing}>
         load contract {!canParse ? <span className='info'>(No compiled json selected)</span> : ''}
       </div>
@@ -362,7 +383,18 @@ function App() {
             <div key={idx} className="copy-addr">
               <div className="date">Deployed on: {addr.deployedDate.toLocaleDateString()} {addr.deployedDate.toLocaleTimeString()}</div>
               <div className="contract-info">
-                <div className="address">{addr.address}</div>
+                <div className="info-row">
+                  <span className="info-row-text">Address:</span>
+                  <div className="address">{addr.address}</div>
+                </div>
+                <div className="info-row">
+                  <span className="info-row-text">Salt:</span>
+                  <div className="address">{addr.salt}</div>
+                </div>
+                <div className="info-row">
+                  <span className="info-row-text">Network:</span>
+                  <div className="address">{addr.network}</div>
+                </div>
               </div>
             </div>
             ))}

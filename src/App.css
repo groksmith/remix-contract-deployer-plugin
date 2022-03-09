@@ -14,6 +14,11 @@
   padding: 0.5em;
 }
 
+.parsed-file-path {
+  font-size: 11px;
+  display: flex;
+}
+
 .salt-container {
   display: flex;
 }
@@ -59,6 +64,7 @@
 .contract-info {
   width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
   margin-bottom: 8px;
 }
@@ -94,20 +100,28 @@ input::placeholder {
   justify-content: space-between;
   flex-direction: column;
   width: 100%;
-  margin-top: 10px;
+  margin: 10px 0;
 }
 
 .input-row label {
-  font-size: 16px;
+  font-size: 11px;
+}
+
+.info-row {
+  width: 100%;
+  display: flex;
+}
+
+.info-row-text {
+  font-size: 11px;
+  margin-right: 4px;
 }
 
 .address {
   overflow-x: scroll;
   font-size: 12px;
   padding-bottom: 8px;
-  margin-bottom: 8px;
   scrollbar-width: thin;
-  width: 100%;
 }
 
 label {
