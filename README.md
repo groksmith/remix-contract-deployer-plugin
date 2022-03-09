@@ -28,7 +28,9 @@ This plugin will help you to work with compiled solidity contracts. This plugin 
 
 The plugin aims to deploy multiple contracts to multiple networks with same deterministic address.
 
-NOTE: This plugin currenlty only supports Metamask.
+**NOTE:** This plugin currenlty only supports Metamask.
+
+**Supported networks:** Ropsten, Rinkeby, Goerli, Kovan.
 
 1. Open the plugin (you will see compile button).
 2. Select compiled solidity contract.
